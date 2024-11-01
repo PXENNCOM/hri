@@ -1,0 +1,78 @@
+services:
+  backend:
+    image: onder-backend
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:                
+      db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=db           
+      - DB_USER=root
+      - DB_PASSWORD=1453Abdullah*
+      - DB_NAME=onder
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - onder-network
+
+  frontend:
+    image: onder-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - onder-network
+
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1453Abdullah*
+      MYSQL_DATABASE: onder
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1453Abdullah*"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "3306:3306"
+    networks:
+      - onder-network
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    container_name: thm_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8053:80"
+    environment:
+      PMA_HOST: db             
+      PMA_USER: root          
+      PMA_PASSWORD: 1453Abdullah*   
+    depends_on:
+      - db
+    networks:
+      - onder-network
+
+networks:
+  onder-network:
+    name: onder-network
+
+volumes:
+  mysql_data:
